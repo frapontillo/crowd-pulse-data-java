@@ -28,4 +28,8 @@ public class ProjectRepository extends Repository<Project, ObjectId> {
     @Override public String getCollectionName() {
         return "Project";
     }
+
+    @Override public Class<Project> getMappedClass() {
+        return Project.class;
+    }
 }

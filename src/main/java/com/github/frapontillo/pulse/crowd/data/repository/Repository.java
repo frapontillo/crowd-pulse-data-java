@@ -16,22 +16,28 @@
 
 package com.github.frapontillo.pulse.crowd.data.repository;
 
-import com.mongodb.BasicDBObject;
+import com.github.frapontillo.pulse.crowd.data.entity.Message;
 import com.mongodb.DBObject;
+import com.mongodb.DBObjectCodecProvider;
 import com.mongodb.MongoClient;
 import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.github.frapontillo.pulse.crowd.data.entity.Message;
-import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.query.Query;
 import rx.Observable;
+import rx.RxReactiveStreams;
+import rx.Subscriber;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Generic repository for MongoDB collections, where:
@@ -43,10 +49,14 @@ import java.util.*;
  * @author Francesco Pontillo
  */
 public abstract class Repository<T, K> extends HonestDAO<T, K> {
-    private MongoCollection<Document> collection;
-    Morphia morphia;
+    private MongoCollection<DBObject> collection;
+    protected Morphia morphia;
     private Datastore datastore;
     private MongoDatabase rxDatastore;
+
+    private final static CodecRegistry registry = CodecRegistries .fromRegistries(
+            com.mongodb.async.client.MongoClients.getDefaultCodecRegistry(),
+            CodecRegistries.fromProviders(new DBObjectCodecProvider()));
 
     /**
      * Create a new Repository using the default configuration in `database.properties`.
@@ -74,8 +84,11 @@ public abstract class Repository<T, K> extends HonestDAO<T, K> {
         ClusterSettings clusterSettings = ClusterSettings.builder()
                 .hosts(Collections.singletonList(config.getServerAddress())).build();
         MongoClientSettings settings =
-                MongoClientSettings.builder().clusterSettings(clusterSettings)
-                        .credentialList(config.getCredentials()).build();
+                MongoClientSettings.builder()
+                        .clusterSettings(clusterSettings)
+                        .credentialList(config.getCredentials())
+                        .codecRegistry(registry)
+                        .build();
         com.mongodb.reactivestreams.client.MongoClient rxClient = MongoClients.create(settings);
 
         // create and/or get the datastore
@@ -91,19 +104,13 @@ public abstract class Repository<T, K> extends HonestDAO<T, K> {
 
     public abstract String getCollectionName();
 
-    public MongoCollection<Document> getRxCollection() {
+    public abstract Class<T> getMappedClass();
+
+    public MongoCollection<DBObject> getRxCollection() {
         if (collection == null) {
-            collection = rxDatastore.getCollection(getCollectionName());
+            collection = rxDatastore.getCollection(getCollectionName(), DBObject.class);
         }
         return collection;
-    }
-
-    public DBObject documentToDBObject(Document document) {
-        Set<Map.Entry<String, Object>> entrySet = document.entrySet();
-        LinkedHashMap<String, Object> map = new LinkedHashMap<>(entrySet.size());
-        entrySet.forEach(e -> map.put(e.getKey(), e.getValue()));
-        DBObject dbObject = new BasicDBObject(map);
-        return dbObject;
     }
 
     /**
@@ -158,5 +165,48 @@ public abstract class Repository<T, K> extends HonestDAO<T, K> {
      */
     public List<T> getBetweenKeys(K from, K to) {
         return findBetweenKeys(from, to).asList();
+    }
+
+    /**
+     * Returns all elements in the collection returning an {@link Observable} that will handle
+     * backpressure.
+     *
+     * @return {@link Observable} of elements returned by the collection.
+     */
+    public Observable<T> findRx() {
+        return findRx(null);
+    }
+
+    /**
+     * Executes a filter on the collection returning an {@link Observable} that will handle
+     * backpressure.
+     *
+     * @param filter The {@link Bson} filter to apply to the collection.
+     * @return {@link Observable} of elements returned by the collection.
+     */
+    public Observable<T> findRx(Bson filter) {
+        FindPublisher<DBObject> findPublisher;
+        if (filter == null) {
+            findPublisher = getRxCollection().find();
+        } else {
+            findPublisher = getRxCollection().find(filter);
+        }
+        return RxReactiveStreams.toObservable(findPublisher)
+                .lift((Observable.Operator<T, DBObject>) subscriber -> new
+                        Subscriber<DBObject>() {
+                            @Override public void onCompleted() {
+                                subscriber.onCompleted();
+                            }
+
+                            @Override public void onError(Throwable e) {
+                                e.printStackTrace();
+                                subscriber.onError(e);
+                            }
+
+                            @Override public void onNext(DBObject dbObject) {
+                                T object = morphia.fromDBObject(getMappedClass(), dbObject);
+                                subscriber.onNext(object);
+                            }
+                        });
     }
 }

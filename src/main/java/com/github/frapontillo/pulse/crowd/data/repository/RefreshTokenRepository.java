@@ -28,4 +28,8 @@ public class RefreshTokenRepository extends Repository<RefreshToken, ObjectId> {
     @Override public String getCollectionName() {
         return "RefreshToken";
     }
+
+    @Override public Class<RefreshToken> getMappedClass() {
+        return RefreshToken.class;
+    }
 }

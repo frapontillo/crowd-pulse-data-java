@@ -17,17 +17,14 @@
 package com.github.frapontillo.pulse.crowd.data.repository;
 
 import com.github.frapontillo.pulse.crowd.data.entity.Message;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.query.Query;
 import rx.Observable;
-import rx.RxReactiveStreams;
-import rx.Subscriber;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -44,6 +41,10 @@ public class MessageRepository extends Repository<Message, ObjectId> {
 
     @Override public String getCollectionName() {
         return "Message";
+    }
+
+    @Override public Class<Message> getMappedClass() {
+        return Message.class;
     }
 
     @Override public Query<Message> findBetweenKeys(ObjectId from, ObjectId to) {
@@ -76,28 +77,11 @@ public class MessageRepository extends Repository<Message, ObjectId> {
         if (languages != null) {
             params.add(in("language", languages));
         }
-        return RxReactiveStreams.toObservable(getRxCollection().find(and(params)))
-                .lift((Observable.Operator<Message, Document>) subscriber -> new
-                        Subscriber<Document>() {
-                    @Override public void onCompleted() {
-                        subscriber.onCompleted();
-                    }
-
-                    @Override public void onError(Throwable e) {
-                        e.printStackTrace();
-                        subscriber.onError(e);
-                    }
-
-                    @SuppressWarnings("unchecked") @Override public void onNext(Document document) {
-                        Message message = new Message();
-                        Set<Map.Entry<String, Object>> entrySet = document.entrySet();
-                        LinkedHashMap map = new LinkedHashMap<String, Object>(entrySet.size());
-                        entrySet.forEach(e -> map.put(e.getKey(), e.getValue()));
-                        DBObject dbObject = new BasicDBObject(map);
-                        morphia.fromDBObject(Message.class, dbObject);
-                        subscriber.onNext(message);
-                    }
-                });
+        Bson filter = null;
+        if (params.size() > 0) {
+            filter = and(params);
+        }
+        return this.findRx(filter);
     }
 
     public Message updateOrInsert(Message message) {

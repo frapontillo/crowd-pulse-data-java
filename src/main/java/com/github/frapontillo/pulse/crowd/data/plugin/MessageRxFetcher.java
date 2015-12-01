@@ -58,6 +58,16 @@ public class MessageRxFetcher
         return new MessageFetcherOptions();
     }
 
+    // Override the plugin default implementation and do NOT apply backpressure strategy
+    // as it will be handled by the upstream producer
+    @Override
+    public Observable<Message> processSingle(MessageFetcherOptions params, Observable<Object> stream) {
+        if (stream != null) {
+            return stream.compose(this.transform(params));
+        }
+        return null;
+    }
+
     @Override
     protected Observable.Operator<Message, Object> getOperator(MessageFetcherOptions parameters) {
         // use a custom db, if any

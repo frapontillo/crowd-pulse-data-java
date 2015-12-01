@@ -28,4 +28,8 @@ public class AccessTokenRepository extends Repository<AccessToken, ObjectId> {
     @Override public String getCollectionName() {
         return "AccessToken";
     }
+
+    @Override public Class<AccessToken> getMappedClass() {
+        return AccessToken.class;
+    }
 }

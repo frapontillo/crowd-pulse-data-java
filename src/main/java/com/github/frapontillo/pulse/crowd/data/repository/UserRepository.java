@@ -28,4 +28,8 @@ public class UserRepository extends Repository<User, ObjectId> {
     @Override public String getCollectionName() {
         return "User";
     }
+
+    @Override public Class<User> getMappedClass() {
+        return User.class;
+    }
 }

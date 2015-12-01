@@ -32,4 +32,8 @@ public class ProjectRunRepository extends Repository<ProjectRun, ObjectId> {
     @Override public String getCollectionName() {
         return "ProjectRun";
     }
+
+    @Override public Class<ProjectRun> getMappedClass() {
+        return ProjectRun.class;
+    }
 }

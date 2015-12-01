@@ -28,4 +28,8 @@ public class AppRepository extends Repository<App, ObjectId> {
     @Override public String getCollectionName() {
         return "App";
     }
+
+    @Override public Class<App> getMappedClass() {
+        return App.class;
+    }
 }

@@ -39,6 +39,10 @@ public class ProfileRepository extends Repository<Profile, ObjectId> {
         return "Profile";
     }
 
+    @Override public Class<Profile> getMappedClass() {
+        return Profile.class;
+    }
+
     /**
      * Get a {@link Profile} given the username.
      *
