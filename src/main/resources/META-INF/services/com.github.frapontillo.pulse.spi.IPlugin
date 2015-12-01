@@ -19,5 +19,6 @@ com.github.frapontillo.pulse.crowd.data.plugin.MessageFetcher
 com.github.frapontillo.pulse.crowd.data.plugin.MessageRxFetcher
 com.github.frapontillo.pulse.crowd.data.plugin.ProfilePersister
 com.github.frapontillo.pulse.crowd.data.plugin.ProfileFetcher
+com.github.frapontillo.pulse.crowd.data.plugin.ProfileRxFetcher
 com.github.frapontillo.pulse.crowd.data.plugin.Streamer
 com.github.frapontillo.pulse.crowd.data.plugin.MessageFilter
