@@ -49,7 +49,7 @@ public class Message extends Entity {
     private Integer shares;
     private Set<Tag> tags;
     private List<Token> tokens;
-    private double sentiment;
+    private Double sentiment;
 
     /**
      * Get the original ID of the Message, according to the original source (Twitter, Facebook,
@@ -374,7 +374,7 @@ public class Message extends Entity {
      *
      * @return The value of the sentiment associated to the Message text.
      */
-    public double getSentiment() {
+    public Double getSentiment() {
         return sentiment;
     }
 
@@ -383,7 +383,7 @@ public class Message extends Entity {
      *
      * @param sentiment The value of the sentiment associated to the Message text.
      */
-    public void setSentiment(double sentiment) {
+    public void setSentiment(Double sentiment) {
         this.sentiment = sentiment;
     }
 
