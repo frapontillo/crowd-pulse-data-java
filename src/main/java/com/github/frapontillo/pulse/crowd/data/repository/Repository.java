@@ -22,10 +22,7 @@ import com.mongodb.DBObjectCodecProvider;
 import com.mongodb.MongoClient;
 import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.reactivestreams.client.FindPublisher;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.MongoCollection;
-import com.mongodb.reactivestreams.client.MongoDatabase;
+import com.mongodb.reactivestreams.client.*;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -35,7 +32,9 @@ import org.mongodb.morphia.query.Query;
 import rx.Observable;
 import rx.RxReactiveStreams;
 import rx.Subscriber;
+import rx.observers.SafeSubscriber;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -191,22 +190,38 @@ public abstract class Repository<T, K> extends HonestDAO<T, K> {
         } else {
             findPublisher = getRxCollection().find(filter);
         }
-        return RxReactiveStreams.toObservable(findPublisher)
-                .lift((Observable.Operator<T, DBObject>) subscriber -> new
-                        Subscriber<DBObject>() {
-                            @Override public void onCompleted() {
-                                subscriber.onCompleted();
-                            }
+        return RxReactiveStreams.toObservable(findPublisher).lift(new DBObjectOperator());
+    }
 
-                            @Override public void onError(Throwable e) {
-                                e.printStackTrace();
-                                subscriber.onError(e);
-                            }
+    public Observable<T> aggregateRx(Bson... filters) {
+        AggregatePublisher<DBObject> aggregatePublisher;
+        List<Bson> aggregations = new ArrayList<>();
+        for (Bson filter : filters) {
+            if (filter != null) {
+                aggregations.add(filter);
+            }
+        }
+        aggregatePublisher = getRxCollection().aggregate(aggregations, DBObject.class);
+        return RxReactiveStreams.toObservable(aggregatePublisher).lift(new DBObjectOperator());
+    }
 
-                            @Override public void onNext(DBObject dbObject) {
-                                T object = morphia.fromDBObject(getMappedClass(), dbObject);
-                                subscriber.onNext(object);
-                            }
-                        });
+    private class DBObjectOperator implements Observable.Operator<T, DBObject> {
+        @Override public Subscriber<? super DBObject> call(Subscriber<? super T> subscriber) {
+            return new SafeSubscriber<>(new Subscriber<DBObject>() {
+                @Override public void onCompleted() {
+                    subscriber.onCompleted();
+                }
+
+                @Override public void onError(Throwable e) {
+                    e.printStackTrace();
+                    subscriber.onError(e);
+                }
+
+                @Override public void onNext(DBObject dbObject) {
+                    T object = morphia.fromDBObject(getMappedClass(), dbObject);
+                    subscriber.onNext(object);
+                }
+            });
+        }
     }
 }

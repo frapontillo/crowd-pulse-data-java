@@ -17,6 +17,8 @@
 package com.github.frapontillo.pulse.crowd.data.repository;
 
 import com.github.frapontillo.pulse.crowd.data.entity.Message;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.query.Query;
@@ -26,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.mongodb.client.model.Aggregates.match;
+import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.*;
 
 /**
@@ -79,9 +83,10 @@ public class MessageRepository extends Repository<Message, ObjectId> {
         }
         Bson filter = null;
         if (params.size() > 0) {
-            filter = and(params);
+            filter = match(and(params));
         }
-        return this.findRx(filter);
+        Bson order = sort(new BsonDocument("date", new BsonInt32(1)));
+        return this.aggregateRx(filter, order);
     }
 
     public Message updateOrInsert(Message message) {
