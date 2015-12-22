@@ -55,6 +55,10 @@ public class MessageFilter extends IPlugin<Message, Message, MessageFilter.Messa
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Message, Message, MessageFilterConfig> getInstance() {
+        return new MessageFilter();
+    }
+
     @Override public MessageFilterConfig getNewParameter() {
         return new MessageFilterConfig();
     }

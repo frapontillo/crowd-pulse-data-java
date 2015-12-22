@@ -50,6 +50,10 @@ public class MessageFetcher extends IPlugin<Object, Message, MessageFetcher.Mess
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Object, Message, MessageFetcherOptions> getInstance() {
+        return new MessageFetcher();
+    }
+
     @Override public MessageFetcherOptions getNewParameter() {
         return new MessageFetcherOptions();
     }

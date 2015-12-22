@@ -51,18 +51,12 @@ public class ProfileRxFetcher
         return PLUGIN_NAME;
     }
 
-    @Override public ProfileFetcherOptions getNewParameter() {
-        return new ProfileFetcherOptions();
+    @Override public IPlugin<Object, Profile, ProfileFetcherOptions> getInstance() {
+        return new ProfileRxFetcher();
     }
 
-    // Override the plugin default implementation and do NOT apply backpressure strategy
-    // as it will be handled by the upstream producer
-    @Override
-    public Observable<Profile> processSingle(ProfileFetcherOptions params, Observable<Object> stream) {
-        if (stream != null) {
-            return stream.compose(this.transform(params));
-        }
-        return null;
+    @Override public ProfileFetcherOptions getNewParameter() {
+        return new ProfileFetcherOptions();
     }
 
     @Override

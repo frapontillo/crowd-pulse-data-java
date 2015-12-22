@@ -43,6 +43,10 @@ public class ProfilePersister
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Profile, Profile, ProfilePersisterOptions> getInstance() {
+        return new ProfilePersister();
+    }
+
     @Override public ProfilePersisterOptions getNewParameter() {
         return new ProfilePersisterOptions();
     }

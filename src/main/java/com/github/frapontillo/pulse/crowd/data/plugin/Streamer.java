@@ -35,6 +35,10 @@ public class Streamer extends IPlugin<Object, Object, VoidConfig> {
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Object, Object, VoidConfig> getInstance() {
+        return new Streamer();
+    }
+
     @Override public VoidConfig getNewParameter() {
         return new VoidConfig();
     }

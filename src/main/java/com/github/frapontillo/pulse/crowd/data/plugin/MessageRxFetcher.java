@@ -54,18 +54,12 @@ public class MessageRxFetcher
         return PLUGIN_NAME;
     }
 
-    @Override public MessageFetcherOptions getNewParameter() {
-        return new MessageFetcherOptions();
+    @Override public IPlugin<Object, Message, MessageFetcherOptions> getInstance() {
+        return new MessageRxFetcher();
     }
 
-    // Override the plugin default implementation and do NOT apply backpressure strategy
-    // as it will be handled by the upstream producer
-    @Override
-    public Observable<Message> processSingle(MessageFetcherOptions params, Observable<Object> stream) {
-        if (stream != null) {
-            return stream.compose(this.transform(params));
-        }
-        return null;
+    @Override public MessageFetcherOptions getNewParameter() {
+        return new MessageFetcherOptions();
     }
 
     @Override

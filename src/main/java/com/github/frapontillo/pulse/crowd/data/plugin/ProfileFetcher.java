@@ -46,6 +46,10 @@ public class ProfileFetcher extends IPlugin<Object, Profile, ProfileFetcher.Prof
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Object, Profile, ProfileFetcherOptions> getInstance() {
+        return new ProfileFetcher();
+    }
+
     @Override public ProfileFetcherOptions getNewParameter() {
         return new ProfileFetcherOptions();
     }

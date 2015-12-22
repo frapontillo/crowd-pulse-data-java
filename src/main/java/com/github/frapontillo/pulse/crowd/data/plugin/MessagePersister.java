@@ -42,6 +42,10 @@ public class MessagePersister
         return PLUGIN_NAME;
     }
 
+    @Override public IPlugin<Message, Message, MessagePersisterOptions> getInstance() {
+        return new MessagePersister();
+    }
+
     @Override public MessagePersisterOptions getNewParameter() {
         return new MessagePersisterOptions();
     }
